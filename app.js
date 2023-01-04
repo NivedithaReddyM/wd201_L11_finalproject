@@ -139,8 +139,10 @@ app.get(
       where: { adminID: request.user.id },
     });
 
+    const username=admin.name
+
     response.render("adminHome", {
-      username: admin.name,
+      username: username,
       ad_id:loggedInAdminID,
       elections: elections,
       csrf: request.csrfToken(),
