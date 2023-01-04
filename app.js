@@ -2,10 +2,10 @@
 const express = require("express");
 const app = express();
 const path = require("path");
-const { Admin, Election, question, Option, Voter } = require("./models");
+const { Admin, Option, Election, Voter,question } = require("./models");
 const bcrypt = require("bcrypt");
 var cookieParser = require("cookie-parser");
-const bodyParser = require("body-parser");
+
 const connectEnsureLogin = require("connect-ensure-login");
 const session = require("express-session");
 const localStrategy = require("passport-local");
@@ -14,6 +14,8 @@ const flash = require("connect-flash");
 const csrf = require("tiny-csrf");
 
 const saltRounds = 10;
+
+const bodyParser = require("body-parser");
 
 app.use(flash());
 app.use(bodyParser.json());
@@ -27,7 +29,7 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.use(
   session({
-    secret: "my-super-secret-key-2178172615261562",
+    secret: "my-super-secret-key-3429834092402",
     cookie: {
       maxAge: 24 * 60 * 60 * 1000,
     },
@@ -39,12 +41,15 @@ app.use(function (request, response, next) {
   next();
 });
 
+//initializing passport
 app.use(passport.initialize());
+
+//using passport session
 app.use(passport.session());
 
-// admin ID passport session
+//passport session for admin
 passport.use(
-  "user-local",
+  "admin",
   new localStrategy(
     {
       usernameField: "email",
@@ -63,16 +68,16 @@ passport.use(
         .catch((error) => {
           console.log(error);
           return done(null, false, {
-            message: "This email is not registered",
+            message: "Email is not registered!!Please  Register",
           });
         });
     }
   )
 );
 
-// voter ID passport session
+// passport session for voter
 passport.use(
-  "voter-local",
+  "voter",
   new localStrategy(
     {
       usernameField: "voterID",
@@ -94,29 +99,27 @@ passport.use(
         .catch((error) => {
           console.log(error);
           return done(null, false, {
-            message: "This voter is not registered",
+            message: "Voter is not registered!!",
           });
         });
     }
   )
 );
 
+
+//serializing user using passport
 passport.serializeUser((user, done) => {
   done(null, user);
 });
 
+//deserializing user using passport
 passport.deserializeUser((obj, done) => {
   done(null, obj);
 });
 
-// home page
+// landup page
 app.get("/", (request, response) => {
   response.render("home");
-});
-
-// signup page frontend
-app.get("/signup", (request, response) => {
-  response.render("signup", { csrf: request.csrfToken() });
 });
 
 // login page frontend
@@ -127,7 +130,29 @@ app.get("/login", (request, response) => {
   response.render("login", { csrf: request.csrfToken() });
 });
 
-// admin home page frontend
+// signup page 
+app.get("/signup", (request, response) => {
+  response.render("signup", { csrf: request.csrfToken() });
+});
+
+
+//retreive all elections using loggedinId
+app.get(
+  "/election",
+  connectEnsureLogin.ensureLoggedIn(),
+  async (request, response) => {
+    const loggedInAdminID = request.user.id;
+    const elections = await Election.findAll({
+      where: { adminID: loggedInAdminID },
+    });
+
+    return response.json({ elections });
+  }
+);
+
+
+
+// admin home page
 app.get(
   "/home",
   connectEnsureLogin.ensureLoggedIn(),
@@ -150,18 +175,6 @@ app.get(
   }
 );
 
-app.get(
-  "/election",
-  connectEnsureLogin.ensureLoggedIn(),
-  async (request, response) => {
-    const loggedInAdminID = request.user.id;
-    const elections = await Election.findAll({
-      where: { adminID: loggedInAdminID },
-    });
-
-    return response.json({ elections });
-  }
-);
 
 // election home page
 app.get(
@@ -170,6 +183,8 @@ app.get(
   async (request, response) => {
     const loggedInAdminID = request.user.id;
     const admin = await Admin.findByPk(loggedInAdminID);
+
+    username=admin.name
     const elections = await Election.findByPk(request.params.id);
 
     if (loggedInAdminID !== elections.adminID) {
@@ -186,9 +201,11 @@ app.get(
       where: { electionID: request.params.id },
     });
 
+
+
     response.render("electionHome", {
       election: elections,
-      username: admin.name,
+      username: username,
       questions: questions,
       voters: voters,
       csrf: request.csrfToken(),
@@ -196,7 +213,7 @@ app.get(
   }
 );
 
-// delete election
+// trying to delete an election with id
 app.delete(
   "/election/:id",
   connectEnsureLogin.ensureLoggedIn(),
@@ -243,7 +260,7 @@ app.delete(
   }
 );
 
-// create new election
+// creating a new election
 app.post(
   "/election",
   connectEnsureLogin.ensureLoggedIn(),
@@ -274,7 +291,7 @@ app.post(
   }
 );
 
-// create new election frontend
+// create new election page display
 app.get(
   "/elections/new",
   connectEnsureLogin.ensureLoggedIn(),
@@ -289,7 +306,7 @@ app.get(
   }
 );
 
-// edit election frontend
+// edit election display page
 app.get(
   "/election/:id/edit",
   connectEnsureLogin.ensureLoggedIn(),
@@ -300,7 +317,7 @@ app.get(
 
     if (loggedInAdminID !== election.adminID) {
       return response.render("error", {
-        errorMessage: "You are not authorized to perform this operation",
+        errorMessage: "This operation is not authorised by you.",
       });
     }
 
@@ -312,7 +329,7 @@ app.get(
   }
 );
 
-// update election name
+// updating an election name
 app.post(
   "/election/:id",
   connectEnsureLogin.ensureLoggedIn(),
@@ -326,7 +343,7 @@ app.post(
       });
     }
 
-    // validation checks
+    //checking validation
     if (request.body.name.trim().length === 0) {
       request.flash("error", "Election name can't be empty");
       return response.redirect(`/election/${request.params.id}/edit`);
@@ -361,9 +378,9 @@ app.post(
   }
 );
 
-// create new admin user
+// creating a new admin display page
 app.post("/users", async (request, response) => {
-  // validation checks
+  // validation checking
   if (request.body.email.trim().length === 0) {
     request.flash("error", "Email can't be empty");
     return response.redirect("/signup");
@@ -1124,7 +1141,7 @@ app.get("/election/:id/vote", async (request, response) => {
 // login voter
 app.post(
   "/election/:id/vote",
-  passport.authenticate("voter-local", {
+  passport.authenticate("voter", {
     failureRedirect: "back",
     failureFlash: true,
   }),
@@ -1307,7 +1324,7 @@ app.get("/signout", (request, response) => {
 
 app.post(
   "/session",
-  passport.authenticate("user-local", {
+  passport.authenticate("admin", {
     failureRedirect: "/login",
     failureFlash: true,
   }),
