@@ -408,8 +408,8 @@ app.post("/users", async (request, response) => {
     return response.redirect("/signup");
   }
 
-  // hasing the password
-  const hashpwd = await bcrypt.hash(request.body.password, saltRounds); // take time so add await
+  // hasing the password using bcrypt
+  const hashpwd = await bcrypt.hash(request.body.password, saltRounds); 
   try {
     const user = await Admin.create({
       name: request.body.name,
@@ -431,7 +431,7 @@ app.post("/users", async (request, response) => {
   }
 });
 
-// get questions of election
+// get all the questions of election
 app.get(
   "/election/:id/questions",
   connectEnsureLogin.ensureLoggedIn(),
@@ -444,7 +444,7 @@ app.get(
   }
 );
 
-// add question to election
+// add a question to the election
 app.post(
   "/election/:id/questions/add",
   connectEnsureLogin.ensureLoggedIn(),
@@ -467,7 +467,7 @@ app.post(
       });
     }
 
-    // validation checks
+    // validation checking for adding a question
     if (request.body.title.trim().length === 0) {
       request.flash("error", "Question title can't be empty");
       return response.redirect(`/election/${request.params.id}`);
@@ -495,7 +495,7 @@ app.post(
   }
 );
 
-// delete option for question
+// try to delete an option for the question
 app.delete(
   "/election/:electionID/question/:questionID/option/:id",
   connectEnsureLogin.ensureLoggedIn(),
@@ -526,7 +526,7 @@ app.delete(
   }
 );
 
-// delete question
+// trying to delete the question
 app.delete(
   "/election/:id/question/:questiondID",
   connectEnsureLogin.ensureLoggedIn(),
@@ -541,12 +541,12 @@ app.delete(
     }
 
     try {
-      // deleting all options of that question
+      // deleting all the options for a  question
       await Option.destroy({
         where: { questionID: request.params.questiondID },
       });
 
-      // delete question
+      // delete a  question
       await question.destroy({ where: { id: request.params.questiondID } });
       return response.json({ ok: true });
     } catch (error) {
@@ -567,7 +567,7 @@ app.get(
 
     if (election.adminID !== adminID) {
       return response.render("error", {
-        errorMessage: "You are not authorized to view this page",
+        errorMessage: "This operation is not authorised by you.",
       });
     }
 
@@ -587,7 +587,7 @@ app.get(
   }
 );
 
-// get options
+// trying to get the  options for a election
 app.get(
   "/election/:electionID/question/:questionID/options",
   connectEnsureLogin.ensureLoggedIn(),
@@ -604,7 +604,7 @@ app.get(
   }
 );
 
-// add option to questions
+// adding option to the questions asked in election
 app.post(
   "/election/:electionID/question/:questionID/options/add",
   connectEnsureLogin.ensureLoggedIn(),
@@ -627,7 +627,7 @@ app.post(
       });
     }
 
-    // validation checks
+    // The  validation check happens here
     if (request.body.option.trim().length === 0) {
       request.flash("error", "Option can't be empty");
       return response.redirect(
@@ -660,7 +660,7 @@ app.post(
   }
 );
 
-// launch election
+// trying to get into launching an  election
 app.get(
   "/election/:id/launch",
   connectEnsureLogin.ensureLoggedIn(),
@@ -669,7 +669,7 @@ app.get(
     const adminID = request.user.id;
     const election = await Election.findByPk(request.params.id);
 
-    // ensure that admin has access rights
+    // making sure that admin has access rights
     if (election.adminID !== adminID) {
       console.log("You don't have access to edit this election");
       return response.render("error", {
@@ -677,7 +677,7 @@ app.get(
       });
     }
 
-    // ensure that there is atelast 1 question in the election
+    // make sure that there is atelast 1 question in the election
     const questions = await question.findAll({
       where: { electionID: request.params.id },
     });
@@ -686,7 +686,7 @@ app.get(
       return response.redirect(`/election/${request.params.id}`);
     }
 
-    // ensure that each question has alteast 2 options
+    // make sure that each question has alteast 2 options
     for (let i = 0; i < questions.length; i++) {
       const options = await Option.findAll({
         where: { questionID: questions[i].id },
@@ -700,7 +700,8 @@ app.get(
       }
     }
 
-    // ensure that there is atleast 1 voter
+    // ensure that there is atleast 1 voter to participate in the election
+
     const voters = await Voter.findAll({
       where: { electionID: request.params.id },
     });
@@ -718,8 +719,7 @@ app.get(
     }
   }
 );
-
-// end election
+// making an end to the election
 app.put(
   "/election/:id/end",
   connectEnsureLogin.ensureLoggedIn(),
@@ -727,7 +727,7 @@ app.put(
     const adminID = request.user.id;
     const election = await Election.findByPk(request.params.id);
 
-    // ensure that admin has access rights
+    // making sure that admin has access rights fro the election
     if (election.adminID !== adminID) {
       console.log("You don't have access to edit this election");
       return response.render("error", {
@@ -752,7 +752,7 @@ app.put(
   }
 );
 
-// election preview
+// trying to get the election preview
 app.get(
   "/election/:id/preview",
   connectEnsureLogin.ensureLoggedIn(),
@@ -788,7 +788,7 @@ app.get(
   }
 );
 
-// edit question
+// giving access to edit the question
 app.post(
   "/election/:electionID/question/:questionID/update",
   connectEnsureLogin.ensureLoggedIn(),
@@ -811,7 +811,7 @@ app.post(
       });
     }
 
-    // validation checks
+    // the validation checks are checked
     if (request.body.title.trim().length === 0) {
       request.flash("error", "Question name cannot be empty");
       return response.redirect(
@@ -855,7 +855,7 @@ app.post(
   }
 );
 
-// edit question frontend
+// making changes in question frontend
 app.get(
   "/election/:electionID/question/:questionID/edit",
   connectEnsureLogin.ensureLoggedIn(),
@@ -888,7 +888,7 @@ app.get(
   }
 );
 
-// add voter
+// trying to add an voter
 app.post(
   "/election/:id/voters/add",
   connectEnsureLogin.ensureLoggedIn(),
@@ -909,7 +909,7 @@ app.post(
       });
     }
 
-    // validation checks
+    // making validation checks
     if (request.body.voterID.trim().length === 0) {
       request.flash("voterError", "Voter ID can't be empty");
       return response.redirect(`/election/${request.params.id}`);
@@ -934,7 +934,7 @@ app.post(
     }
 
     try {
-      // hash the password
+      // hashing the password
       const hashpwd = await bcrypt.hash(request.body.password, saltRounds);
 
       await Voter.add(request.body.voterID, hashpwd, request.params.id);
@@ -946,7 +946,7 @@ app.post(
   }
 );
 
-// delete voter
+// access to delete the voter
 app.post(
   "/election/:electionID/voter/:voterID/delete",
   connectEnsureLogin.ensureLoggedIn(),
@@ -985,7 +985,7 @@ app.post(
   }
 );
 
-// edit option frontend
+// changing edit option frontend
 app.get(
   "/election/:electionID/question/:questionID/option/:optionID/edit",
   connectEnsureLogin.ensureLoggedIn(),
@@ -1019,7 +1019,7 @@ app.get(
   }
 );
 
-// edit option
+//  making edit option
 app.post(
   "/election/:electionID/question/:questionID/option/:optionID/update",
   connectEnsureLogin.ensureLoggedIn(),
@@ -1041,7 +1041,7 @@ app.post(
       });
     }
 
-    // validation checks
+    // ensure to check validation 
     if (request.body.value.trim().length === 0) {
       request.flash("error", "Option can't be empty");
       return response.redirect(
@@ -1082,7 +1082,7 @@ app.post(
   }
 );
 
-// cast vote frontend
+// trying cast vote frontend
 app.get("/election/:id/vote", async (request, response) => {
   const election = await Election.findByPk(request.params.id);
 
@@ -1093,7 +1093,7 @@ app.get("/election/:id/vote", async (request, response) => {
     });
   }
 
-  // redirect to results page if election is over
+  // trying to redirect to results page if election is over
   if (election.ended === true) {
     console.log("Election ended");
     return response.redirect(`/election/${request.params.id}/result`);
@@ -1113,7 +1113,7 @@ app.get("/election/:id/vote", async (request, response) => {
     options.push(allOption);
   }
 
-  // voter logged in
+  // the voter logged in
   if (request.user && request.user.id && request.user.voterID) {
     const voter = await Voter.findByPk(request.user.id);
 
@@ -1138,7 +1138,7 @@ app.get("/election/:id/vote", async (request, response) => {
   }
 });
 
-// login voter
+// logining for the  voter
 app.post(
   "/election/:id/vote",
   passport.authenticate("voter", {
@@ -1185,13 +1185,13 @@ app.post(
         responses.push(responseID);
       }
 
-      // add responses of voter
+      // adding responses of voter
       await Voter.addResponse(request.params.id, responses);
 
-      // mark the voter as voted
+      // marking the voter as voted
       await Voter.markVoted(request.params.id);
 
-      // render thank you message
+      // rendering thank you message
       return response.redirect(`/election/${election.id}/vote`);
     } catch (error) {
       console.log(error);
@@ -1200,12 +1200,12 @@ app.post(
   }
 );
 
-// election results frontend
+// showing election results frontend
 app.get(
   "/election/:id/result",
   // connectEnsureLogin.ensureLoggedIn(),
   async (request, response) => {
-    // fetching and calculating all results
+    //  trying to fetch and calculating all results
     const questions = await question.findAll({
       where: {
         electionID: request.params.id,
@@ -1230,16 +1230,16 @@ app.get(
     let optionPercentage = [];
 
     for (let i = 0; i < questions.length; i++) {
-      // specific question
+      // staking pecific question
       let array = [];
 
-      // all options of that question
+      // making all options of that question
       const allOption = await Option.findAll({
         where: { questionID: questions[i].id },
       });
 
       allOption.forEach((option) => {
-        // count for specific option
+        // trying to count for specific option
         let count = 0;
 
         voters.forEach((voter) => {
@@ -1268,7 +1268,7 @@ app.get(
 
     const election = await Election.findByPk(request.params.id);
 
-    // if admin logged in and not voter logged in
+    //case where if admin logged in and not voter logged in
     if (request.user && request.user.id && !request.user.voterID) {
       const adminID = request.user.id;
       const admin = await Admin.findByPk(adminID);
@@ -1288,14 +1288,14 @@ app.get(
         totalVoters: totalVoters,
       });
     } else {
-      // if not admin and election not ended
+      //case for  not admin and election not ended
       if (!election.ended) {
         return response.render("error", {
           errorMessage: "You are not authorized to view this page",
         });
       }
 
-      // getting the admin username
+      //try  getting into the admin username
       const admin = await Admin.findByPk(election.adminID);
       return response.render("result", {
         admin: false,
@@ -1311,7 +1311,7 @@ app.get(
   }
 );
 
-// signout admin
+//  make  admin signout
 app.get("/signout", (request, response) => {
   request.logout((err) => {
     if (err) {
