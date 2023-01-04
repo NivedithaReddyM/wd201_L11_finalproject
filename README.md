@@ -1,18 +1,16 @@
 # Hello Guys ,This is Niveditha
 
-**The Project i have done is **
-# Online Voting System
-This is a Online Voting Platform built using Node.js ,Postgresql,Tailwincss,Express.js which allows election administrators to sign up and 
-create multiple elections. You can create ballots of multiple questions,add options to question,add voters for particular election,reset 
-password feature is available for both election admin and voter,create a custom public URL for the election... etc..
 
+# Online Voting System
+** ABOUT THE PROJECT **
+This is a Node.js, Postgresql, Bootstrap, and Express.js-based digital voting platform that allows election officials to sign up and create multiple elections. You can create ballots with multiple questions, add options to the questions, add voters for a specific election, reset passwords for both election administrators and voters, create a custom public URL for the election, and so on.
 
 
 [![MIT License](https://img.shields.io/badge/Platform-Deployed-green.svg)](https://choosealicense.com/licenses/mit/)
 
 Deployed App link: 
 
-https://final-project-wd-11.onrender.com
+https://wd201-l11-finalproject.onrender.com
 
 ## Demo link
 
@@ -21,8 +19,7 @@ https://final-project-wd-11.onrender.com
 
 
 - Fully Responsive platform
-- reset password feature for both admin and voter
-- Uses CSRF tokens to prevent attacks 
+- Uses CSRF tokens to prevent attacks such as sql-injection
 - Admin will be able to signup,Login
 - Admin can create the elections
 - Admin can create a ballot of questions in an election
@@ -30,8 +27,7 @@ https://final-project-wd-11.onrender.com
 - Admin can delete the elections,questions,voters
 - Admin can register voters
 - Admin can launch election
-- Elections administrator can set custom path to election
-- Ending the election
+- Admin has the privilege to launch and end the election
 - We cannot delete election after ending election
 - We cannot edit questions after launching election
 - We cannot edit questions,voters,options etc... after ending an election
@@ -41,7 +37,7 @@ https://final-project-wd-11.onrender.com
 
 ## Technologies used to build the website
 
-**Client:** EJS(Embedded Javascript Templates), TailwindCSS,CSS
+**Client:** EJS(Embedded Javascript Templates),CSS,Bootstrap 
 
 **Server:** Node.js, Express.js
 

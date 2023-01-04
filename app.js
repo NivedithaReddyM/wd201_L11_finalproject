@@ -141,9 +141,9 @@ app.get(
   "/election",
   connectEnsureLogin.ensureLoggedIn(),
   async (request, response) => {
-    const loggedInAdminID = request.user.id;
+    const login_admin_id = request.user.id;
     const elections = await Election.findAll({
-      where: { adminID: loggedInAdminID },
+      where: { adminID: login_admin_id },
     });
 
     return response.json({ elections });
@@ -157,8 +157,8 @@ app.get(
   "/home",
   connectEnsureLogin.ensureLoggedIn(),
   async (request, response) => {
-    const loggedInAdminID = request.user.id;
-    const admin = await Admin.findByPk(loggedInAdminID);
+    const login_admin_id = request.user.id;
+    const admin = await Admin.findByPk(login_admin_id);
 
     const elections = await Election.findAll({
       where: { adminID: request.user.id },
@@ -168,7 +168,7 @@ app.get(
 
     response.render("adminHome", {
       username: username,
-      ad_id:loggedInAdminID,
+      ad_id:login_admin_id,
       elections: elections,
       csrf: request.csrfToken(),
     });
@@ -181,13 +181,13 @@ app.get(
   "/election/:id",
   connectEnsureLogin.ensureLoggedIn(),
   async (request, response) => {
-    const loggedInAdminID = request.user.id;
-    const admin = await Admin.findByPk(loggedInAdminID);
+    const login_admin_id = request.user.id;
+    const admin = await Admin.findByPk(login_admin_id);
 
     username=admin.name
     const elections = await Election.findByPk(request.params.id);
 
-    if (loggedInAdminID !== elections.adminID) {
+    if (login_admin_id !== elections.adminID) {
       return response.render("error", {
         errorMessage: "You are not authorized to view this page",
       });
@@ -270,11 +270,11 @@ app.post(
       return response.redirect("/elections/new");
     }
 
-    const loggedInAdminID = request.user.id;
+    const login_admin_id = request.user.id;
 
     // validation checks
     const election = await Election.findOne({
-      where: { adminID: loggedInAdminID, name: request.body.name },
+      where: { adminID: login_admin_id, name: request.body.name },
     });
     if (election) {
       request.flash("error", "Election name already used");
@@ -282,7 +282,7 @@ app.post(
     }
 
     try {
-      await Election.add(loggedInAdminID, request.body.name);
+      await Election.add(login_admin_id, request.body.name);
       response.redirect("/home");
     } catch (error) {
       console.log(error);
@@ -296,8 +296,8 @@ app.get(
   "/elections/new",
   connectEnsureLogin.ensureLoggedIn(),
   async (request, response) => {
-    const loggedInAdminID = request.user.id;
-    const admin = await Admin.findByPk(loggedInAdminID);
+    const login_admin_id = request.user.id;
+    const admin = await Admin.findByPk(login_admin_id);
 
     response.render("newElection", {
       username: admin.name,
@@ -311,11 +311,11 @@ app.get(
   "/election/:id/edit",
   connectEnsureLogin.ensureLoggedIn(),
   async (request, response) => {
-    const loggedInAdminID = request.user.id;
+    const login_admin_id = request.user.id;
     const election = await Election.findByPk(request.params.id);
-    const admin = await Admin.findByPk(loggedInAdminID);
+    const admin = await Admin.findByPk(login_admin_id);
 
-    if (loggedInAdminID !== election.adminID) {
+    if (login_admin_id !== election.adminID) {
       return response.render("error", {
         errorMessage: "This operation is not authorised by you.",
       });
@@ -334,10 +334,10 @@ app.post(
   "/election/:id",
   connectEnsureLogin.ensureLoggedIn(),
   async (request, response) => {
-    const loggedInAdminID = request.user.id;
+    const login_admin_id = request.user.id;
     const elections = await Election.findByPk(request.params.id);
 
-    if (loggedInAdminID !== elections.adminID) {
+    if (login_admin_id !== elections.adminID) {
       return response.render("error", {
         errorMessage: "You are not authorized to view this page",
       });
@@ -350,7 +350,7 @@ app.post(
     }
     const sameElection = await Election.findOne({
       where: {
-        adminID: loggedInAdminID,
+        adminID: login_admin_id,
         name: request.body.name,
       },
     });
@@ -396,10 +396,7 @@ app.post("/users", async (request, response) => {
     return response.redirect("/signup");
   }
 
-  if (request.body.password.length < 8) {
-    request.flash("error", "Password must be atleast 8 characters long");
-    return response.redirect("/signup");
-  }
+  
 
   // check if email already exists
   const admin = await Admin.findOne({ where: { email: request.body.email } });
@@ -408,6 +405,11 @@ app.post("/users", async (request, response) => {
     return response.redirect("/signup");
   }
 
+  //validating password
+  if (request.body.password.length < 8) {
+    request.flash("error", "Password must be atleast 8 characters long");
+    return response.redirect("/signup");
+  }
   // hasing the password using bcrypt
   const hashpwd = await bcrypt.hash(request.body.password, saltRounds); 
   try {
@@ -449,11 +451,11 @@ app.post(
   "/election/:id/questions/add",
   connectEnsureLogin.ensureLoggedIn(),
   async (request, response) => {
-    const loggedInAdminID = request.user.id;
+    const login_admin_id = request.user.id;
 
     const election = await Election.findByPk(request.params.id);
 
-    if (loggedInAdminID !== election.adminID) {
+    if (login_admin_id !== election.adminID) {
       return response.render("error", {
         errorMessage: "You are not authorized to view this page",
       });
@@ -495,6 +497,37 @@ app.post(
   }
 );
 
+// trying to delete the question
+app.delete(
+  "/election/:id/question/:questiondID",
+  connectEnsureLogin.ensureLoggedIn(),
+  async (request, response) => {
+    const adminID = request.user.id;
+    const election = await Election.findByPk(request.params.id);
+
+    if (election.adminID !== adminID) {
+      return response.render("error", {
+        errorMessage: "You are not authorized to view this page",
+      });
+    }
+
+    try {
+      // deleting all the options for a  question
+      await Option.destroy({
+        where: { questionID: request.params.questiondID },
+      });
+
+      // delete a  question
+      await question.destroy({ where: { id: request.params.questiondID } });
+      return response.json({ ok: true });
+    } catch (error) {
+      console.log(error);
+      return response.send(error);
+    }
+  }
+);
+
+
 // try to delete an option for the question
 app.delete(
   "/election/:electionID/question/:questionID/option/:id",
@@ -526,35 +559,6 @@ app.delete(
   }
 );
 
-// trying to delete the question
-app.delete(
-  "/election/:id/question/:questiondID",
-  connectEnsureLogin.ensureLoggedIn(),
-  async (request, response) => {
-    const adminID = request.user.id;
-    const election = await Election.findByPk(request.params.id);
-
-    if (election.adminID !== adminID) {
-      return response.render("error", {
-        errorMessage: "You are not authorized to view this page",
-      });
-    }
-
-    try {
-      // deleting all the options for a  question
-      await Option.destroy({
-        where: { questionID: request.params.questiondID },
-      });
-
-      // delete a  question
-      await question.destroy({ where: { id: request.params.questiondID } });
-      return response.json({ ok: true });
-    } catch (error) {
-      console.log(error);
-      return response.send(error);
-    }
-  }
-);
 
 // questions home page with all options
 app.get(
@@ -587,22 +591,6 @@ app.get(
   }
 );
 
-// trying to get the  options for a election
-app.get(
-  "/election/:electionID/question/:questionID/options",
-  connectEnsureLogin.ensureLoggedIn(),
-  async (request, response) => {
-    // const adminID = request.user.id;
-    // const election = await Election.findByPk(request.params.electionID);
-
-    // const questions = await question.findByPk(request.params.questionID);
-
-    const options = await Option.findAll({
-      where: { questionID: request.params.questionID },
-    });
-    return response.send(options);
-  }
-);
 
 // adding option to the questions asked in election
 app.post(
@@ -659,6 +647,20 @@ app.post(
     }
   }
 );
+
+// trying to get the  options for a election
+app.get(
+  "/election/:electionID/question/:questionID/options",
+  connectEnsureLogin.ensureLoggedIn(),
+  async (request, response) => {
+
+    const options = await Option.findAll({
+      where: { questionID: request.params.questionID },
+    });
+    return response.send(options);
+  }
+);
+
 
 // trying to get into launching an  election
 app.get(
@@ -719,38 +721,6 @@ app.get(
     }
   }
 );
-// making an end to the election
-app.put(
-  "/election/:id/end",
-  connectEnsureLogin.ensureLoggedIn(),
-  async (request, response) => {
-    const adminID = request.user.id;
-    const election = await Election.findByPk(request.params.id);
-
-    // making sure that admin has access rights fro the election
-    if (election.adminID !== adminID) {
-      console.log("You don't have access to edit this election");
-      return response.render("error", {
-        errorMessage: "You are not authorized to view this page",
-      });
-    }
-
-    if (election.ended === true || election.launched === false) {
-      console.log("Election not launched");
-      return response.render("error", {
-        errorMessage: "Invalid Request",
-      });
-    }
-
-    try {
-      await Election.end(request.params.id);
-      return response.json({ ok: true });
-    } catch (error) {
-      console.log(error);
-      return response.send(error);
-    }
-  }
-);
 
 // trying to get the election preview
 app.get(
@@ -787,6 +757,40 @@ app.get(
     });
   }
 );
+
+// making an end to the election
+app.put(
+  "/election/:id/end",
+  connectEnsureLogin.ensureLoggedIn(),
+  async (request, response) => {
+    const adminID = request.user.id;
+    const election = await Election.findByPk(request.params.id);
+
+    // making sure that admin has access rights fro the election
+    if (election.adminID !== adminID) {
+      console.log("You don't have access to edit this election");
+      return response.render("error", {
+        errorMessage: "You are not authorized to view this page",
+      });
+    }
+
+    if (election.ended === true || election.launched === false) {
+      console.log("Election not launched");
+      return response.render("error", {
+        errorMessage: "Invalid Request",
+      });
+    }
+
+    try {
+      await Election.end(request.params.id);
+      return response.json({ ok: true });
+    } catch (error) {
+      console.log(error);
+      return response.send(error);
+    }
+  }
+);
+
 
 // giving access to edit the question
 app.post(
